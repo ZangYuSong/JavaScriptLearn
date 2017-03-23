@@ -5,6 +5,9 @@
 (function () {
     'use strict';
     var MaxSafeInteger = Number.MAX_SAFE_INTEGER;
+    Array['_isArray'] = function (obj) {
+        return Object.prototype.toString.call(obj) === '[object Array]';
+    };
     Array.prototype._push = function () {
         var n = this.length, m = arguments.length;
         if (m + n > MaxSafeInteger) {
@@ -53,11 +56,13 @@
     Array.prototype._concat = function () {
         var MAX = this.length;
         var argsLength = arguments.length;
+        // 判断最终数组的长度是否超出最大安全值
         for (var i = 0; i < argsLength; i += 1) {
-            if (!(arguments[i] instanceof Array)) {
-                throw '参数类型出错';
+            if (Array._isArray(arguments[i])) {
+                MAX += arguments[i].length;
+            } else {
+                MAX += 1;
             }
-            MAX += arguments[i].length;
             if (MAX > MaxSafeInteger) {
                 throw '数组长度超过最大安全值';
             }
@@ -65,13 +70,15 @@
         var new_array = [];
         var new_array_length = 0;
         for (i = 0; i < this.length; i += 1) {
-            new_array[new_array_length] = this[i];
-            new_array_length += 1;
+            new_array[new_array_length++] = this[i];
         }
         for (i = 0; i < argsLength; i += 1) {
-            for (var j = 0; j < arguments[i].length; j += 1) {
-                new_array[new_array_length] = arguments[i][j];
-                new_array_length += 1;
+            if (Array._isArray(arguments[i])) {
+                for (var j = 0; j < arguments[i].length; j += 1) {
+                    new_array[new_array_length++] = arguments[i][j];
+                }
+            } else {
+                new_array[new_array_length++] = arguments[i];
             }
         }
         new_array.length = new_array_length;
@@ -93,9 +100,12 @@
         return this.length;
     };
     Array.prototype._slice = function () {
-        var start = arguments[0], end = arguments[0];
-        if (isNaN(start) || isNaN(end)) {
-            throw '参数类型出错';
+        var start = arguments[0], end = this.length;
+        if (arguments.length > 1) {
+            end = arguments[1];
+        }
+        if (!Number._isInteger(start) || !Number._isInteger(end)) {
+            throw '参数必须为整数';
         }
         var len = this.length;
         if (start < 0) {
@@ -140,11 +150,11 @@
     Array.prototype._splice = function () {
         var arg_len = arguments.length;
         if (arg_len < 2) {
-            throw '参数输入有误';
+            throw '至少输入两个参数';
         }
         var index = arguments[0], num = arguments[1], array_len = this.length;
-        if (isNaN(index) || isNaN(num) || num < 0) {
-            throw '参数输入有误';
+        if (!Number._isInteger(index) || !Number._isInteger(num) || num < 0) {
+            throw '前两项参数必须为整数，且第二个参数不能小于0';
         }
         // 起始下标
         if (index < 0) {
@@ -197,18 +207,10 @@
         if (len === 0) {
             return -1;
         }
-        if (arguments[1] < 0) {
-            start += len;
-            if (start < 0) {
-                start = 0;
-            }
-        } else {
-            start = arguments[1];
-        }
     };
 })();
 
 var test = [1, 2, 3, '5'];
-var ss = test._remove('-4');
+var ss = test._splice(-1, 2);
 console.log(ss);
 console.log(test);

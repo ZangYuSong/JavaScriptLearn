@@ -7,4 +7,7 @@
     Number['_isInteger'] = function (obj) {
         return typeof obj === 'number' && obj % 1 === 0;
     };
+    Number['_isNum'] = function (obj) {
+        return typeof obj === 'number'
+    };
 })();

@@ -18,8 +18,8 @@
         return length;
     };
     Array.prototype._remove = function (index) {
-        if (isNaN(index) || index > this.length) {
-            throw '参数输入有误';
+        if (!Number._isInteger(index) || index > this.length) {
+            throw '参数必须为整数';
         }
         var value;
         for (var i = 0, j = 0; i < this.length; i++) {
@@ -209,6 +209,6 @@
 })();
 
 var test = [1, 2, 3, '5'];
-var ss = test._slice(-4);
+var ss = test._remove('-4');
 console.log(ss);
 console.log(test);

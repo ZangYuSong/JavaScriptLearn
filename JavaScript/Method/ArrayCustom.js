@@ -13,26 +13,34 @@
         if (m + n > MaxSafeInteger) {
             throw '数组长度超过最大安全值';
         }
-        for (var i = 0; i < m; i += 1) {
+        for (var i = 0; i < m; i++) {
             this[n + i] = arguments[i];
         }
         var length = m + n;
         this.length = length;
         return length;
     };
-    Array.prototype._remove = function (index) {
-        if (!Number._isInteger(index) || index > this.length) {
+    Array.prototype._remove = function () {
+        var index = arguments[0];
+        if (!Number._isInteger(index)) {
             throw '参数必须为整数';
         }
-        var value;
+        var value, len = this.length;
+        if (index < 0) {
+            index += len;
+            if (index < 0) {
+                index = 0;
+            }
+        }
         for (var i = 0, j = 0; i < this.length; i++) {
             if (i !== index) {
                 this[j++] = this[i];
             } else {
                 value = this[i];
+                len--;
             }
         }
-        this.length -= 1;
+        this.length = len;
         return value;
     };
     Array.prototype._pop = function () {
@@ -57,11 +65,11 @@
         var MAX = this.length;
         var argsLength = arguments.length;
         // 判断最终数组的长度是否超出最大安全值
-        for (var i = 0; i < argsLength; i += 1) {
+        for (var i = 0; i < argsLength; i++) {
             if (Array._isArray(arguments[i])) {
                 MAX += arguments[i].length;
             } else {
-                MAX += 1;
+                MAX++;
             }
             if (MAX > MaxSafeInteger) {
                 throw '数组长度超过最大安全值';
@@ -69,12 +77,12 @@
         }
         var new_array = [];
         var new_array_length = 0;
-        for (i = 0; i < this.length; i += 1) {
+        for (i = 0; i < this.length; i++) {
             new_array[new_array_length++] = this[i];
         }
-        for (i = 0; i < argsLength; i += 1) {
+        for (i = 0; i < argsLength; i++) {
             if (Array._isArray(arguments[i])) {
-                for (var j = 0; j < arguments[i].length; j += 1) {
+                for (var j = 0; j < arguments[i].length; j++) {
                     new_array[new_array_length++] = arguments[i][j];
                 }
             } else {
@@ -91,10 +99,10 @@
         }
         var length = m + n;
         this.length = length;
-        for (var i = n - 1; i >= 0; i -= 1) {
+        for (var i = n - 1; i >= 0; i--) {
             this[--length] = this[i];
         }
-        for (i = m - 1; i >= 0; i -= 1) {
+        for (i = m - 1; i >= 0; i--) {
             this[--length] = arguments[i];
         }
         return this.length;
@@ -133,7 +141,7 @@
             return new_array;
         }
         new_array.length = end - start;
-        for (var i = 0; start < end; start += 1, i += 1) {
+        for (var i = 0; start < end; start++, i++) {
             new_array[i] = this[start];
         }
         return new_array;
@@ -174,14 +182,14 @@
         // 删除
         var new_array = [];
         new_array.length = num;
-        for (var i = 0, k = 0; i < array_len; i += 1) {
+        for (var i = 0, k = 0; i < array_len; i++) {
             if (i !== index) {
                 this[k++] = this[i];
             } else {
-                for (var j = 0; j < num; j += 1) {
+                for (var j = 0; j < num; j++) {
                     new_array[j] = this[i++];
                 }
-                i -= 1;
+                i--;
             }
         }
         // 插入数据
@@ -190,27 +198,48 @@
             return new_array;
         }
         array_len -= num;
-        for (i = this.length - 1; i >= 0; i -= 1) {
+        for (i = this.length - 1; i >= 0; i--) {
             if (i !== index + arg_len - 3) {
                 this[i] = this[--array_len];
             } else {
-                for (j = arg_len - 1; j > 1; j -= 1, i -= 1) {
+                for (j = arg_len - 1; j > 1; j--, i--) {
                     this[i] = arguments[j];
                 }
-                i += 1;
+                i++;
             }
         }
         return new_array;
     };
     Array.prototype._indexOf = function () {
         var len = this.length, start = 0;
-        if (len === 0) {
+        if (len === 0 || arguments.length < 1) {
             return -1;
         }
+        if (arguments.length > 1) {
+            if (!Number._isNum(arguments[1])) {
+                throw '第二个参数必须为整数';
+            }
+            start = arguments[1];
+        }
+        if (start > len) {
+            return -1;
+        }
+        if (start < 0) {
+            start += len;
+            if (start < 0) {
+                start = 0;
+            }
+        }
+        for (; start < len; start++) {
+            if (start in this && this[start] === arguments[0]) {
+                return start;
+            }
+        }
+        return -1;
     };
 })();
 
 var test = [1, 2, 3, '5'];
-var ss = test._splice(-1, 2);
+var ss = test._indexOf('5', 5);
 console.log(ss);
 console.log(test);

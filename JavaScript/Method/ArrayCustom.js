@@ -237,9 +237,79 @@
         }
         return -1;
     };
+    // 元素交换
+    var swap = function (arr, from, to) {
+        if (from === to) return;
+        var temp = arr[from];
+        arr[from] = arr[to];
+        arr[to] = temp;
+    };
+    // 默认排序的方式
+    var sortDefault = function (a, b) {
+        return a > b ? 1 : -1;
+    };
+    // 选择基准元素
+    var getPivot = function (arr, from, to) {
+        var middle = (from + to) >> 1;
+        var a = arr[from];
+        var b = arr[to];
+        var c = arr[middle];
+        var temp;
+        if (a < b) {
+            temp = a;
+            a = b;
+            b = temp;
+        }
+        if (a < c) {
+            temp = a;
+            a = c;
+            c = temp;
+        }
+        if (b < c) {
+            temp = b;
+            b = c;
+            c = temp;
+        }
+        return b;
+    };
+    // 排序
+    var QuickSortWithPartition = function (arr, fn, from, to) {
+        if (from >= to) return;
+        var pivot = getPivot(arr, from, to); // 快排序的基准元素
+        var smallEnd = from;   // 小数区的终止下标
+        var bigEnd = from + 1;  // 大数区的终止下标
+        for (; bigEnd <= to; bigEnd++) {
+            if (fn(pivot, arr[bigEnd]) > 0) {
+                // 基准值比对比值大的时候进入
+                // smallEnd++ 表示小数区增加一个
+                // 随后交换，这样smallEnd左边的是小数，右边是大数
+                smallEnd++;
+                var a = bigEnd, b = smallEnd;
+                // for (; a === b; a--) {
+                //     if (fn(pivot, arr[a]) === 0) break;
+                //     swap(arr, a, arr[a]);
+                // }
+                swap(arr, smallEnd, a);
+            }
+        }
+        // 将基准元素于小数区的元素终止的元素交换，这样基准元素的右边就是大数，左边是小数
+        swap(arr, smallEnd, from);
+        // 递归小数区
+        QuickSortWithPartition(arr, fn, from, smallEnd - 1);
+        // 递归大数区
+        QuickSortWithPartition(arr, fn, smallEnd + 1, to);
+    };
+    Array.prototype._sort = function () {
+        var len = this.length;
+        var fn = arguments[0] || sortDefault;
+        if (len <= 0) return [];
+        if (len === 1) return arr;
+        QuickSortWithPartition(this, fn, 0, len - 1);
+    };
 })();
 
-var test = [1, 2, 3, '5'];
-var ss = test._indexOf('5', 5);
-console.log(ss);
+var test = ['a', 'c', 'w', 'e', 'r'];
+test._sort(function (a, b) {
+    return a < b ? 1 : -1;
+});
 console.log(test);

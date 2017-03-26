@@ -2,8 +2,6 @@
  * Created by Zang on 2017/3/23.
  */
 
-var count = 0;
-
 (function () {
     'use strict';
     var MaxSafeInteger = Number.MAX_SAFE_INTEGER;
@@ -11,7 +9,8 @@ var count = 0;
         return Object.prototype.toString.call(obj) === '[object Array]';
     };
     Array.prototype._push = function () {
-        var n = this.length, m = arguments.length;
+        var n = this.length,
+            m = arguments.length;
         if (m + n > MaxSafeInteger) {
             throw '数组长度超过最大安全值';
         }
@@ -64,8 +63,8 @@ var count = 0;
         return value;
     };
     Array.prototype._concat = function () {
-        var MAX = this.length;
-        var argsLength = arguments.length;
+        var MAX = this.length,
+            argsLength = arguments.length;
         // 判断最终数组的长度是否超出最大安全值
         for (var i = 0; i < argsLength; i++) {
             if (Array._isArray(arguments[i])) {
@@ -95,7 +94,8 @@ var count = 0;
         return new_array;
     };
     Array.prototype._unshift = function () {
-        var n = this.length, m = arguments.length;
+        var n = this.length,
+            m = arguments.length;
         if (m + n > MaxSafeInteger) {
             throw '数组长度超过最大安全值';
         }
@@ -110,7 +110,8 @@ var count = 0;
         return this.length;
     };
     Array.prototype._slice = function () {
-        var start = arguments[0], end = this.length;
+        var start = arguments[0],
+            end = this.length;
         if (arguments.length > 1) {
             end = arguments[1];
         }
@@ -149,7 +150,9 @@ var count = 0;
         return new_array;
     };
     Array.prototype._reverse = function () {
-        var start = 0, end = this.length - 1, temp;
+        var start = 0,
+            end = this.length - 1,
+            temp;
         for (; start < end; start++, end--) {
             temp = this[end];
             this[end] = this[start];
@@ -213,15 +216,13 @@ var count = 0;
         return new_array;
     };
     Array.prototype._indexOf = function () {
-        var len = this.length, start = 0;
+        var len = this.length,
+            start = arguments[1] || 0;
         if (len === 0 || arguments.length < 1) {
             return -1;
         }
-        if (arguments.length > 1) {
-            if (!Number._isNum(arguments[1])) {
-                throw '第二个参数必须为整数';
-            }
-            start = arguments[1];
+        if (!Number._isNum(start)) {
+            throw '第二个参数必须为整数';
         }
         if (start > len) {
             return -1;
@@ -233,6 +234,31 @@ var count = 0;
             }
         }
         for (; start < len; start++) {
+            if (start in this && this[start] === arguments[0]) {
+                return start;
+            }
+        }
+        return -1;
+    };
+    Array.prototype._lastIndexOf = function () {
+        var len = this.length,
+            start = arguments[1] || len - 1;
+        if (len === 0 || arguments.length < 1) {
+            return -1;
+        }
+        if (!Number._isNum(start)) {
+            throw '第二个参数必须为整数';
+        }
+        if (start < 0) {
+            return -1;
+        }
+        if (start > len - 1) {
+            start -= len;
+            if (start > len - 1) {
+                start = len - 1;
+            }
+        }
+        for (; start < len; start--) {
             if (start in this && this[start] === arguments[0]) {
                 return start;
             }
@@ -252,10 +278,10 @@ var count = 0;
     };
     // 选择基准元素
     var getPivot = function (arr, fn, from, to) {
-        var a = from;
-        var b = (from + to) >> 1;
-        var c = to;
-        var temp;
+        var a = from,
+            b = (from + to) >> 1,
+            c = to,
+            temp;
         if (fn(arr[a], arr[b]) < 0) {
             temp = a;
             a = b;
@@ -280,12 +306,11 @@ var count = 0;
     };
     // 排序
     var QuickSortWithPartition = function (arr, fn, from, to) {
-        count++;
         if (from >= to) return;
-        var pivot = getPivot(arr, fn, from, to); // 快排序的基准元素
-        var smallEnd = from;   // 小数区的终止下标
-        var bigEnd = from + 1;  // 大数区的终止下标
-        var pivotTrue = 0;     // 实际小数区的终止下标
+        var pivot = getPivot(arr, fn, from, to), // 快排序的基准元素
+            smallEnd = from,    // 小数区的终止下标
+            bigEnd = from + 1,  // 大数区的终止下标
+            pivotTrue = 0;      // 实际小数区的终止下标
         for (; bigEnd <= to; bigEnd++) {
             if (fn(arr[bigEnd], pivot) < 0) {
                 // 基准值比对比值大的时候进入
@@ -319,18 +344,148 @@ var count = 0;
         QuickSortWithPartition(arr, fn, smallEnd + 1, to);
     };
     Array.prototype._sort = function () {
-        var len = this.length;
-        var fn = arguments[0] || sortDefault;
+        var len = this.length,
+            fn = arguments[0] || sortDefault;
         if (len < 2) return;
         QuickSortWithPartition(this, fn, 0, len - 1);
     };
+    Array.prototype._join = function () {
+        var separator = arguments[0] || ',',
+            len = this.length,
+            result = '';
+        for (var i = 0; i < len; i++) {
+            result += this[i];
+            if (i !== len - 1) {
+                result += separator;
+            }
+        }
+        return result;
+    };
+    Array.prototype._forEach = function () {
+        if (typeof arguments[0] !== "function") {
+            throw new TypeError();
+        }
+        var len = this.length,
+            fn = arguments[0],
+            thisP = arguments[1];
+        for (var i = 0; i < len; i++) {
+            if (i in this) {
+                fn.call(thisP, this[i], i, this);
+            }
+        }
+    };
+    Array.prototype._filter = function () {
+        var len = this.length;
+        if (typeof arguments[0] !== "function") {
+            throw new TypeError();
+        }
+        if (len === 0) {
+            return [];
+        }
+        var fn = arguments[0],
+            res = [],
+            thisP = arguments[1];
+        for (var i = 0; i < len; i++) {
+            var val = this[i];
+            if (fn.call(thisP, val, i, this)) {
+                res.push(val);
+            }
+        }
+        return res;
+    };
+    Array.prototype._every = function () {
+        var len = this.length;
+        if (typeof arguments[0] !== "function") {
+            throw new TypeError();
+        }
+        if (len === 0) {
+            return false;
+        }
+        var fn = arguments[0],
+            thisP = arguments[1];
+        for (var i = 0; i < len; i++) {
+            if (i in this && !fn.call(thisP, this[i], i, this)) {
+                return false;
+            }
+        }
+        return true;
+    };
+    Array.prototype._some = function () {
+        var len = this.length;
+        if (typeof arguments[0] !== "function") {
+            throw new TypeError();
+        }
+        if (len === 0) {
+            return false;
+        }
+        var fn = arguments[0],
+            thisP = arguments[1];
+        for (var i = 0; i < len; i++) {
+            if (i in this && fn.call(thisP, this[i], i, this)) {
+                return true;
+            }
+        }
+        return false;
+    };
+    Array.prototype._map = function () {
+        var len = this.length;
+        if (typeof arguments[0] !== "function") {
+            throw new TypeError();
+        }
+        if (len === 0) {
+            return [];
+        }
+        var fn = arguments[0],
+            thisP = arguments[1],
+            res = [];
+        for (var i = 0; i < len; i++) {
+            res[i] = fn.call(thisP, this[i], i, this);
+        }
+        return res;
+    };
+    Array.prototype._reduce = function () {
+        var len = this.length;
+        if (typeof arguments[0] !== "function") {
+            throw new TypeError();
+        }
+        if (len === 0 && arguments.length === 1) {
+            return 0;
+        }
+        var fn = arguments[0],
+            res, i = 0;
+        if (arguments[1]) {
+            res = arguments[1];
+        } else {
+            res = this[0];
+            i++;
+        }
+        for (; i < len; i++) {
+            res = fn.call(null, res, this[i], i, this);
+        }
+        return res;
+    };
+    Array.prototype._reduceRight = function () {
+        var len = this.length;
+        if (typeof arguments[0] !== "function") {
+            throw new TypeError();
+        }
+        if (len === 0 && arguments.length === 1) {
+            return 0;
+        }
+        var fn = arguments[0],
+            res, i = len - 1;
+        if (arguments[1]) {
+            res = arguments[1];
+        } else {
+            res = this[i];
+            i--;
+        }
+        for (; i >= 0; i--) {
+            res = fn.call(null, res, this[i], i, this);
+        }
+        return res;
+    };
 })();
 
-// var test = [2, 2, 4, 1, 4, 5, 4, 7, 4, 2, 2];
-var test = [4, 2, 4, 1, 4, 5, 4, 7, 4, 2, 4, 1, 4, 5, 4, 7, 4, 2, 4, 1, 4, 5, 4, 7, 4, 2, 4, 1, 4, 5, 4, 7];
-var sort = function (a, b) {
-    return a < b ? 1 : a === b ? 0 : -1;
-};
-test._sort(sort);
-console.log(test);
-console.log(count);
+var test = [1, 2, 3, 4, 5, 6, 1, 2, 3, 5];
+console.log(test._lastIndexOf(1, 15));

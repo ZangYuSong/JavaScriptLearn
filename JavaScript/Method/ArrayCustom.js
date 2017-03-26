@@ -2,6 +2,8 @@
  * Created by Zang on 2017/3/23.
  */
 
+var count = 0;
+
 (function () {
     'use strict';
     var MaxSafeInteger = Number.MAX_SAFE_INTEGER;
@@ -246,70 +248,89 @@
     };
     // 默认排序的方式
     var sortDefault = function (a, b) {
-        return a > b ? 1 : -1;
+        return a > b ? 1 : a === b ? 0 : -1;
     };
     // 选择基准元素
-    var getPivot = function (arr, from, to) {
-        var middle = (from + to) >> 1;
-        var a = arr[from];
-        var b = arr[to];
-        var c = arr[middle];
+    var getPivot = function (arr, fn, from, to) {
+        var a = from;
+        var b = (from + to) >> 1;
+        var c = to;
         var temp;
-        if (a < b) {
+        if (fn(arr[a], arr[b]) < 0) {
             temp = a;
             a = b;
             b = temp;
         }
-        if (a < c) {
+        if (fn(arr[a], arr[c]) < 0) {
             temp = a;
             a = c;
             c = temp;
         }
-        if (b < c) {
+        if (fn(arr[b], arr[c]) < 0) {
             temp = b;
             b = c;
             c = temp;
         }
-        return b;
+        if (from !== b) {
+            temp = arr[from];
+            arr[from] = arr[b];
+            arr[b] = temp;
+        }
+        return arr[from];
     };
     // 排序
     var QuickSortWithPartition = function (arr, fn, from, to) {
+        count++;
         if (from >= to) return;
-        var pivot = getPivot(arr, from, to); // 快排序的基准元素
+        var pivot = getPivot(arr, fn, from, to); // 快排序的基准元素
         var smallEnd = from;   // 小数区的终止下标
         var bigEnd = from + 1;  // 大数区的终止下标
+        var pivotTrue = 0;     // 实际小数区的终止下标
         for (; bigEnd <= to; bigEnd++) {
-            if (fn(pivot, arr[bigEnd]) > 0) {
+            if (fn(arr[bigEnd], pivot) < 0) {
                 // 基准值比对比值大的时候进入
                 // smallEnd++ 表示小数区增加一个
                 // 随后交换，这样smallEnd左边的是小数，右边是大数
                 smallEnd++;
-                var a = bigEnd, b = smallEnd;
-                // for (; a === b; a--) {
-                //     if (fn(pivot, arr[a]) === 0) break;
-                //     swap(arr, a, arr[a]);
-                // }
-                swap(arr, smallEnd, a);
+                swap(arr, smallEnd, bigEnd);
+                if (pivotTrue !== 0) {
+                    // 小于和等于的元素在基准元素左边
+                    // 必须保持 pivotTrue 与 smallEnd 之间的元素等于基准元素，其在左边的最右边
+                    // 例如 4为基准元素 左边区域目前为 2,4,4,1交换后为  2,1,4,4
+                    // 交换之后保持所有等于基准元素排列在一起 pivotTrue++
+                    swap(arr, smallEnd, pivotTrue);
+                    pivotTrue++;
+                }
+            }
+            else if (fn(arr[bigEnd], pivot) === 0) {
+                smallEnd++;
+                swap(arr, smallEnd, bigEnd);
+                if (pivotTrue === 0) {
+                    pivotTrue = smallEnd;
+                }
             }
         }
         // 将基准元素于小数区的元素终止的元素交换，这样基准元素的右边就是大数，左边是小数
-        swap(arr, smallEnd, from);
+        pivotTrue--;
+        swap(arr, pivotTrue > 0 ? pivotTrue : smallEnd, from);
         // 递归小数区
-        QuickSortWithPartition(arr, fn, from, smallEnd - 1);
+        QuickSortWithPartition(arr, fn, from, pivotTrue === -1 ? smallEnd - 1 : pivotTrue - 1);
         // 递归大数区
         QuickSortWithPartition(arr, fn, smallEnd + 1, to);
     };
     Array.prototype._sort = function () {
         var len = this.length;
         var fn = arguments[0] || sortDefault;
-        if (len <= 0) return [];
-        if (len === 1) return arr;
+        if (len < 2) return;
         QuickSortWithPartition(this, fn, 0, len - 1);
     };
 })();
 
-var test = ['a', 'c', 'w', 'e', 'r'];
-test._sort(function (a, b) {
-    return a < b ? 1 : -1;
-});
+// var test = [2, 2, 4, 1, 4, 5, 4, 7, 4, 2, 2];
+var test = [4, 2, 4, 1, 4, 5, 4, 7, 4, 2, 4, 1, 4, 5, 4, 7, 4, 2, 4, 1, 4, 5, 4, 7, 4, 2, 4, 1, 4, 5, 4, 7];
+var sort = function (a, b) {
+    return a < b ? 1 : a === b ? 0 : -1;
+};
+test._sort(sort);
 console.log(test);
+console.log(count);

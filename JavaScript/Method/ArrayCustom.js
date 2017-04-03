@@ -12,7 +12,7 @@
         var n = this.length,
             m = arguments.length;
         if (m + n > MaxSafeInteger) {
-            throw '数组长度超过最大安全值';
+            throw new TypeError();
         }
         for (var i = 0; i < m; i++) {
             this[n + i] = arguments[i];
@@ -22,11 +22,9 @@
         return length;
     };
     Array.prototype._remove = function () {
-        var index = arguments[0];
-        if (!Number._isInteger(index)) {
-            throw '参数必须为整数';
-        }
-        var value, len = this.length;
+        var index = parseInt(arguments[0]) ? parseInt(arguments[0]) : 0,
+            value,
+            len = this.length;
         if (index < 0) {
             index += len;
             if (index < 0) {
@@ -73,7 +71,7 @@
                 MAX++;
             }
             if (MAX > MaxSafeInteger) {
-                throw '数组长度超过最大安全值';
+                throw new TypeError();
             }
         }
         var new_array = [];
@@ -97,7 +95,7 @@
         var n = this.length,
             m = arguments.length;
         if (m + n > MaxSafeInteger) {
-            throw '数组长度超过最大安全值';
+            throw new TypeError();
         }
         var length = m + n;
         this.length = length;
@@ -110,23 +108,13 @@
         return this.length;
     };
     Array.prototype._slice = function () {
-        var start = arguments[0],
-            end = this.length;
-        if (arguments.length > 1) {
-            end = arguments[1];
-        }
-        if (!Number._isInteger(start) || !Number._isInteger(end)) {
-            throw '参数必须为整数';
-        }
-        var len = this.length;
+        var len = this.length,
+            start = parseInt(arguments[0]) ? parseInt(arguments[0]) : 0,
+            end = parseInt(arguments[1]) ? parseInt(arguments[1]) : len;
         if (start < 0) {
             start += len;
             if (start < 0) {
                 start = 0;
-            }
-        } else {
-            if (start > len) {
-                start = len;
             }
         }
         if (end < 0) {
@@ -134,10 +122,9 @@
             if (end < 0) {
                 end = 0;
             }
-        } else {
-            if (end > len) {
-                end = len;
-            }
+        }
+        if (end > len) {
+            end = len;
         }
         var new_array = [];
         if (start > end) {
@@ -161,23 +148,16 @@
         return this;
     };
     Array.prototype._splice = function () {
-        var arg_len = arguments.length;
-        if (arg_len < 2) {
-            throw '至少输入两个参数';
-        }
-        var index = arguments[0], num = arguments[1], array_len = this.length;
-        if (!Number._isInteger(index) || !Number._isInteger(num) || num < 0) {
-            throw '前两项参数必须为整数，且第二个参数不能小于0';
-        }
+        var arg_len = arguments.length,
+            array_len = this.length,
+            index = parseInt(arguments[0]) ? parseInt(arguments[0]) : 0,
+            num = parseInt(arguments[1]) ? (parseInt(arguments[1]) < 0 ? 0 : parseInt(arguments[1])) : 0;
+        if (arguments.length === 0) return [];
         // 起始下标
         if (index < 0) {
             index += array_len;
             if (index < 0) {
                 index = 0;
-            }
-        } else {
-            if (index > array_len) {
-                index = array_len;
             }
         }
         // 删除个数
@@ -186,19 +166,20 @@
         }
         // 删除
         var new_array = [];
-        new_array.length = num;
-        for (var i = 0, k = 0; i < array_len; i++) {
-            if (i !== index) {
-                this[k++] = this[i];
-            } else {
-                for (var j = 0; j < num; j++) {
-                    new_array[j] = this[i++];
+        if (num > 0) {
+            for (var i = 0, k = 0; i < array_len; i++) {
+                if (i !== index) {
+                    this[k++] = this[i];
+                } else {
+                    for (var j = 0; j < num; j++) {
+                        new_array[j] = this[i++];
+                    }
+                    i--;
                 }
-                i--;
             }
         }
         // 插入数据
-        this.length = array_len - num - 2 + arg_len;
+        this.length = array_len - num + (arg_len < 2 ? 0 : arg_len - 2);
         if (arg_len === 2) {
             return new_array;
         }
@@ -217,12 +198,9 @@
     };
     Array.prototype._indexOf = function () {
         var len = this.length,
-            start = arguments[1] || 0;
+            start = parseInt(arguments[1]) ? parseInt(arguments[1]) : 0;
         if (len === 0 || arguments.length < 1) {
             return -1;
-        }
-        if (!Number._isNum(start)) {
-            throw '第二个参数必须为整数';
         }
         if (start > len) {
             return -1;
@@ -242,12 +220,9 @@
     };
     Array.prototype._lastIndexOf = function () {
         var len = this.length,
-            start = arguments[1] || len - 1;
+            start = parseInt(arguments[1]) ? parseInt(arguments[1]) : len - 1
         if (len === 0 || arguments.length < 1) {
             return -1;
-        }
-        if (!Number._isNum(start)) {
-            throw '第二个参数必须为整数';
         }
         if (start < 0) {
             return -1;
@@ -486,6 +461,3 @@
         return res;
     };
 })();
-
-var test = [1, 2, 3, 4, 5, 6, 1, 2, 3, 5];
-console.log(test._lastIndexOf(1, 15));
